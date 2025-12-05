@@ -7,23 +7,28 @@
     "test": "tests"
   },
   "scripts": {
-  "dev": "nodemon server.js",
-  "start": "node server.js",
-  "test": "jest"
-},
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "jest"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1"
   },
   "devDependencies": {
     "eslint": "^9.39.1",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
+    "prisma": "^6.7.0",
     "supertest": "^7.1.4"
   }
 }
