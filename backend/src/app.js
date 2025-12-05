@@ -1,20 +1,27 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
+import express from "express";
+import userRouter from "./modules/user/user.router.js";
+import authRoutes from "./modules/auth/auth.routes.js";
+import { authMiddleware } from "./modules/auth/auth.middleware.js";
+
 
 const app = express();
 
-// Middlewares
 app.use(express.json());
-app.use(cors());
-app.use(morgan("dev"));
 
-// Test route
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "GSB Kart Backend API is running",
-  });
+// User Routes
+app.use("/api/users", userRouter);
+
+// Public routes
+app.use("/api/auth", authRoutes);
+
+// Protected test route
+app.get("/api/protected", authMiddleware, (req, res) => {
+    res.json({
+        message: "Korumalı endpoint'e eriştiniz!",
+        user: req.user
+    });
 });
 
-module.exports = app;
+export default app;
+
+
