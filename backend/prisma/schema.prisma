@@ -1,0 +1,228 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+
+// ===============================
+//  ENUMERATIONS
+// ===============================
+enum TransactionType {
+  TOPUP
+  PAYMENT
+  TRANSFER
+  REFUND
+  WITHDRAW
+}
+
+enum QrOperationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+enum QrOperationType {
+  PAYMENT
+  LOGIN
+  VALIDATION
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ALERT
+}
+
+// ===============================
+//  USER DOMAIN
+// ===============================
+
+model User {
+  id           String        @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String        @unique
+  phone        String?
+  passwordHash String
+  tckn         String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  profile      UserProfile?
+  sessions     AuthSession[]
+  cards        Card[]
+  purchases    Purchase[]
+  tickets      Ticket[]
+  notifications Notification[]
+  qrOperations QrOperation[]
+}
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  avatarUrl String?
+  gender    String?
+  birthDate DateTime?
+  address   String?
+  city      String?
+  district  String?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ===============================
+//  AUTH DOMAIN
+// ===============================
+
+model AuthSession {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String
+  deviceInfo   String?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ===============================
+//  CARD DOMAIN
+// ===============================
+
+model Card {
+  id         String        @id @default(uuid())
+  userId     String
+  cardNumber String        @unique
+  cardType   String
+  balance    Float         @default(0)
+  currency   String        @default("TRY")
+  limit      Float?
+  isActive   Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  expiryDate DateTime?
+
+  user         User         @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String           @id @default(uuid())
+  cardId      String
+  type        TransactionType
+  amount      Float
+  description String?
+  referenceId String?
+  createdAt   DateTime   @default(now())
+  completedAt DateTime?
+
+  card         Card        @relation(fields: [cardId], references: [id])
+  qrOperation  QrOperation?
+}
+
+// ===============================
+//  QR DOMAIN
+// ===============================
+
+model QrOperation {
+  id            String            @id @default(uuid())
+  userId        String
+  qrCode        String
+  operationType QrOperationType
+  amount        Float?
+  status        QrOperationStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  expiresAt     DateTime?
+  transactionId String?           @unique
+
+  user        User        @relation(fields: [userId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+}
+
+// ===============================
+//  MARKET DOMAIN
+// ===============================
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  price         Float
+  imageUrl      String?
+  isAvailable   Boolean  @default(true)
+  stockQuantity Int      @default(0)
+  category      String?
+
+  purchases Purchase[]
+}
+
+model Purchase {
+  id         String   @id @default(uuid())
+  userId     String
+  productId  String
+  quantity   Int      @default(1)
+  price      Float
+  status     String   @default("COMPLETED")
+  purchasedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// ===============================
+//  EVENT DOMAIN
+// ===============================
+
+model Event {
+  id         String   @id @default(uuid())
+  title      String
+  description String?
+  eventDate  DateTime
+  location   String
+  quota      Int?
+  category   String?
+  organizer  String?
+  isActive   Boolean  @default(true)
+
+  tickets Ticket[]
+}
+
+model Ticket {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  qrCode    String?
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+// ===============================
+//  NOTIFICATION DOMAIN
+// ===============================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+
